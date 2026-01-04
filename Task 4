@@ -1,0 +1,43 @@
+import pandas as pd
+import numpy as np
+
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import classification_report, precision_score, recall_score, f1_score
+from imblearn.over_sampling import SMOTE
+
+url = "https://storage.googleapis.com/download.tensorflow.org/data/creditcard.csv"
+df = pd.read_csv(url)
+
+print(df.head())
+print(df["Class"].value_counts())
+
+
+X = df.drop("Class", axis=1)
+y = df["Class"]
+
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+
+smote = SMOTE(random_state=42)
+X_resampled, y_resampled = smote.fit_resample(X_scaled, y)
+
+print("After SMOTE class distribution:", np.bincount(y_resampled))
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X_resampled, y_resampled, test_size=0.2, random_state=42
+)
+
+model = LogisticRegression(max_iter=1000)
+model.fit(X_train, y_train)
+
+y_pred = model.predict(X_test)
+
+print("Precision:", precision_score(y_test, y_pred))
+print("Recall:", recall_score(y_test, y_pred))
+print("F1-score:", f1_score(y_test, y_pred))
+
+print("\nClassification Report:\n")
+print(classification_report(y_test, y_pred))
